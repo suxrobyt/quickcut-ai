@@ -1,0 +1,58 @@
+name: Build QuickCut AI APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract QuickCut AI
+        run: |
+          unzip -o quickcut_ai_final.zip
+          ls -la
+          ls -la quickcut_ai
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.35.0"
+          cache: true
+
+      - name: Create Android project files
+        working-directory: quickcut_ai
+        run: |
+          flutter create --platforms=android .
+
+      - name: Get Flutter packages
+        working-directory: quickcut_ai
+        run: |
+          flutter pub get
+
+      - name: Build Android APK
+        working-directory: quickcut_ai
+        env:
+          AI_BACKEND: ${{ vars.AI_BACKEND }}
+        run: |
+          if [ -z "$AI_BACKEND" ]; then
+            AI_BACKEND="https://YOUR-SERVER-URL"
+          fi
+
+          flutter build apk \
+            --release \
+            --dart-define=AI_BACKEND="$AI_BACKEND"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: QuickCut-AI-APK
+          path: quickcut_ai/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
