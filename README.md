@@ -1,1 +1,0 @@
-# quickcut-ai
